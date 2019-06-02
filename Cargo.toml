@@ -1,0 +1,8 @@
+[package]
+name = "flang"
+version = "0.1.0"
+authors = ["Andreas Grønlien <andreas@gronlien.no>"]
+edition = "2018"
+
+[dependencies]
+regex = "1"
