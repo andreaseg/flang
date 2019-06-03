@@ -89,7 +89,8 @@ macro_rules! token_rules {
             let re = Regex::new(&concat!($("|(",$regex,")",)+r"|(\S+)")[1..]).expect("Invalid regex");
 
             for (line_num, line) in buf_reader.lines().enumerate() {
-                for (token_type, cap) in find_matches(&re, line.as_ref().unwrap()) {
+                let line = line.as_ref().unwrap().split("#").next().unwrap();
+                for (token_type, cap) in find_matches(&re, &line) {
 
                     match token_type {
                         /*
@@ -104,7 +105,7 @@ macro_rules! token_rules {
                                     line: line_num,
                                     position: cap.start()
                                 },
-                                $rule(&line.as_ref().unwrap()[cap.start()..cap.end()])
+                                $rule(&line[cap.start()..cap.end()])
                                 ));
                             }
                         ,)+
@@ -118,7 +119,7 @@ macro_rules! token_rules {
                                     line: line_num,
                                     position: cap.start()
                                 },
-                                line.as_ref().unwrap()[cap.start()..cap.end()].to_string()
+                                line[cap.start()..cap.end()].to_string()
                             ));
                         }
                     };
@@ -145,6 +146,9 @@ token_rules! {
     Float(f64) = r"[[:digit:]]*\.[[:digit:]]+" => |x: &str| Float(x.parse::<f64>().unwrap()),
     Int(i64) = r"[[:digit:]]+" => |x: &str| Int(x.parse::<i64>().unwrap()),
     Char(i64) = r"'[[[:alpha:]]|\n]'" => |x: &str| Char(x[1..].chars().next().unwrap() as i64),
+    // Bitshifts
+    Shr = r">>" => |_| Shr,
+    Shl = r"<<" => |_| Shl,
     // Comparators
     Equal = r"==" => |_| Equal,
     Neq = r"!=" => |_| Neq,
@@ -257,6 +261,17 @@ mod tests {
         );
         test_tokenize_err!("¤ error" =>
             "¤",
+        );
+    }
+
+    #[allow(unused_mut)]
+    #[allow(unused_imports)]
+    #[test]
+    fn test_comment() {
+        test_tokenize_ok!("# lorem ipsum" =>
+        );
+        test_tokenize_ok!("x# lorem ipsum" =>
+            Name("x".to_string()),
         );
     }
 }
