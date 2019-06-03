@@ -141,22 +141,43 @@ macro_rules! token_rules {
 /// 
 /// Rules are prioritized in order
 token_rules! {
-    Lambda = r"\\" => |_| Lambda,
+    // Numbers
     Float(f64) = r"[[:digit:]]*\.[[:digit:]]+" => |x: &str| Float(x.parse::<f64>().unwrap()),
     Int(i64) = r"[[:digit:]]+" => |x: &str| Int(x.parse::<i64>().unwrap()),
-    Comma = r"," => |_| Comma,
-    Period = r"\." => |_| Period,
-    Semicolon = r";" => |_| Semicolon,
+    Char(i64) = r"'[[[:alpha:]]|\n]'" => |x: &str| Char(x[1..].chars().next().unwrap() as i64),
+    // Comparators
+    Equal = r"==" => |_| Equal,
+    Neq = r"!=" => |_| Neq,
+    Leq = r"<=" => |_| Leq,
+    Geq = r">=" => |_| Geq,
+    Less = r"<" => |_| Less,
+    Greater = r">" => |_| Greater,
+    // Arithmetic operators
     Add = r"\+" => |_| Add,
     Sub = r"\-" => |_| Sub,
     Mul = r"\*" => |_| Mul,
     Div = r"/" => |_| Div,
-    Equal = r"=" => |_| Equal,
+    Assign = r"=" => |_| Assign,
+    // Logical operators
+    Not = r"!" => |_| Not,
+    And = r"&&" => |_| And,
+    Or = r"\|\|" => |_| Or,
+    // Bitwise operators
+    Bnot = r"~" => |_| Bnot,
+    Band = r"&" => |_| Band,
+    Bor = r"\|" => |_| Bor,
+    Xor = r"\^" => |_| Xor,
+    // Structure tokens
+    Lambda = r"\\" => |_| Lambda,
+    Comma = r"," => |_| Comma,
+    Period = r"\." => |_| Period,
+    Semicolon = r";" => |_| Semicolon,
+    Lpar = r"\(" => |_| Lpar,
+    Rpar = r"\)" => |_| Rpar,
+    // Calls and bindings
     Call(String) = r"[[:alpha:]][[:word:]]*\(" => |x: &str| Call(x[..x.len()-1].to_string()),
     Builtin(String) = r"_[[:alpha:]][[:word:]]*\(" => |x: &str| Builtin(x[..x.len()-1].to_string()),
     Name(String) = r"[[:alpha:]][[:word:]]*" => |x: &str| Name(x.to_string()),
-    Lpar = r"\(" => |_| Lpar,
-    Rpar = r"\)" => |_| Rpar,
 }
 
 #[cfg(test)]
@@ -202,14 +223,18 @@ mod tests {
     fn test_single() {
         test_tokenize_ok!("\\" =>
             Lambda,
-        )
+        );
+
+        test_tokenize_ok!("'A'" =>
+            Char(65),
+        );
     }
 
     #[test]
     fn test_long() {
         test_tokenize_ok!("f = \\g x.g(g(x))" =>
             Name("f".to_string()),
-            Equal,
+            Assign,
             Lambda,
             Name("g".to_string()),
             Name("x".to_string()),
